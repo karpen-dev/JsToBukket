@@ -3,19 +3,10 @@
     <output-path>$PROJECT_DIR$/out/artifacts/TsToBukket_jar</output-path>
     <root id="archive" name="TsToBukket.jar">
       <element id="module-output" name="TsToBukket" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/graalvm/polyglot/polyglot/23.1.0/polyglot-23.1.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/io/methvin/directory-watcher/0.15.0/directory-watcher-0.15.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/72.1/icu4j-72.1.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/graalvm/sdk/word/23.1.0/word-23.1.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/graalvm/regex/regex/23.0.0/regex-23.0.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/graalvm/sdk/collections/23.1.0/collections-23.1.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/graalvm/sdk/graal-sdk/23.1.0/graal-sdk-23.1.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/graalvm/js/js/23.0.0/js-23.0.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/graalvm/sdk/nativeimage/23.1.0/nativeimage-23.1.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/graalvm/truffle/truffle-api/23.0.0/truffle-api-23.0.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.7.0/jna-5.7.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30.jar" path-in-jar="/" />
-      <element id="module-source" name="TsToBukket" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/mozilla/rhino/1.7.14/rhino-1.7.14.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/io/methvin/directory-watcher/0.15.0/directory-watcher-0.15.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.7.0/jna-5.7.0.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

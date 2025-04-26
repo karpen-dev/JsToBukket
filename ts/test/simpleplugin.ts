@@ -1,13 +1,5 @@
-class Simpleplugin implements MinecraftPlugin {
-    private logger = getLogger("TS");
+declare const plugin: any;
 
-    onEnable() {
-        this.logger.info("Hi form ts");
-    }
-
-    onDisable() {
-        this.logger.info("Goodbye from ts");
-    }
+function onEnable() {
+    plugin.getLogger().info("Плагин включён!");
 }
-
-export default new Simpleplugin();
