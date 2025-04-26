@@ -1,0 +1,14 @@
+{
+  "name": "mcpluginapi",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "karpen",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "tsc": "^2.0.4"
+  }
+}
