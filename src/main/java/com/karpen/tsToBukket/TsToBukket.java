@@ -39,9 +39,18 @@ public final class TsToBukket extends JavaPlugin {
             pluginsDir.mkdirs();
         }
 
+        getLogger().info("Java VM name: " + System.getProperty("java.vm.name"));
+        getLogger().info("Java Home: " + System.getProperty("java.home"));
         getLogger().info("Java version: " + System.getProperty("java.version"));
         getLogger().info("GraalVM version: " + System.getProperty("graalvm.version"));
         getLogger().info("Current working dir: " + System.getProperty("user.dir"));
+
+        try {
+            Class.forName("org.graalvm.polyglot.Context");
+            getLogger().info("GraalVM Polyglot is available!");
+        } catch (ClassNotFoundException e) {
+            getLogger().info("Polyglot not found.");
+        }
 
         initJsEngine();
 
