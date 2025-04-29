@@ -2,3 +2,8 @@ name: TsToBukket
 version: '1.0'
 main: com.karpen.tsToBukket.TsToBukket
 api-version: '1.21'
+
+commands:
+  js:
+    using: /js
+    permission: "jstobukkit.*"

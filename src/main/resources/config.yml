@@ -1,0 +1,27 @@
+# Javascript to bukkit compiler
+# Github - https://github.com/karpen-dev/JsToBukket
+# Get latest version - https://github.com/karpen-dev/JsToBukket/releases
+
+# This plugin have one permission
+# jstobukkit.*
+
+# Messages
+msg:
+
+  # Errors
+
+  # Error args msg
+  args: "&cUnknown command, use /js <reload - reload all scripts and config | reloadscript <script name.js> - reload script >"
+
+  # Not available
+  perms: "&cYou can't using this."
+
+  # Infos
+
+  # Reloaded
+  reloaded: "&aSuccess reloaded"
+
+  # Script reloaded
+  # %script% - script name
+  script-reloaded: "&aSuccess reloaded %script%"
+

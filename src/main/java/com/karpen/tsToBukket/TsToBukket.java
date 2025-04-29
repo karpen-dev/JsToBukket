@@ -1,18 +1,22 @@
 package com.karpen.tsToBukket;
 
+import com.karpen.tsToBukket.commands.Js;
 import org.bukkit.Bukkit;
 import org.bukkit.event.*;
-import org.bukkit.plugin.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mozilla.javascript.*;
 import java.io.*;
 import java.util.*;
 
 public final class TsToBukket extends JavaPlugin {
+
     private Context rhino;
+
     private final Map<String, Scriptable> loadedScripts = new HashMap<>();
     private final Map<String, List<Function>> eventHandlers = new HashMap<>();
     private final Map<String, Class<? extends Event>> eventClasses = new HashMap<>();
+
+    private Js jsCmd;
 
     @Override
     public void onEnable() {
@@ -28,11 +32,18 @@ public final class TsToBukket extends JavaPlugin {
         String initScript = "if (typeof exports !== 'undefined') delete exports;\n" +
                 "if (typeof module !== 'undefined') delete module;\n" +
                 "function onEvent(eventName, callback) {\n" +
-                "  plugin._registerEvent(eventName, callback);\n" +
+                "  plugin.registerEvent(eventName, callback);\n" +
                 "}";
+
         rhino.evaluateString(sharedScope, initScript, "init.js", 1, null);
 
         loadAllScripts(sharedScope);
+
+        jsCmd = new Js(this, sharedScope, loadedScripts);
+
+        Objects.requireNonNull(getCommand("js")).setExecutor(jsCmd);
+        Objects.requireNonNull(getCommand("js")).setTabCompleter(jsCmd);
+
     }
 
     private void registerCommonEvents() {
@@ -71,7 +82,7 @@ public final class TsToBukket extends JavaPlugin {
         throw new ClassNotFoundException("Class not found: " + simpleName);
     }
 
-    public void _registerEvent(String eventName, Function callback) {
+    public void registerEvent(String eventName, Function callback) {
         eventHandlers.computeIfAbsent(eventName, k -> new ArrayList<>()).add(callback);
 
         Class<? extends Event> eventClass = eventClasses.get(eventName);
@@ -99,7 +110,7 @@ public final class TsToBukket extends JavaPlugin {
         );
     }
 
-    private void loadAllScripts(Scriptable sharedScope) {
+    public void loadAllScripts(Scriptable sharedScope) {
         File[] jsFiles = getDataFolder().listFiles((dir, name) -> name.endsWith(".js"));
 
         if (jsFiles == null) {
@@ -112,7 +123,7 @@ public final class TsToBukket extends JavaPlugin {
         }
     }
 
-    private void loadScript(File jsFile, Scriptable sharedScope) {
+   public void loadScript(File jsFile, Scriptable sharedScope) {
         try (FileReader reader = new FileReader(jsFile)) {
             Scriptable scope = rhino.newObject(sharedScope);
             scope.setPrototype(sharedScope);
@@ -157,7 +168,7 @@ public final class TsToBukket extends JavaPlugin {
                     ((Function)onDisable).call(rhino, scope, scope, new Object[]{});
                 }
             } catch (Exception e) {
-                getLogger().warning("Ошибка при вызове onDisable в скрипте " + name + ": " + e.getMessage());
+                getLogger().warning("Error with onDisable " + name + ": " + e.getMessage());
             }
         });
 
