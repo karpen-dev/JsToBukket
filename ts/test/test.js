@@ -1,22 +1,22 @@
-function onEnable() {
-    logger.info("JS plugin has started");
+(function() {
+    const plugin = require('plugin');
 
-    onEvent("PlayerJoinEvent", (event) => {
+    plugin.onEvent("PlayerJoinEvent", function(event) {
         const player = event.getPlayer();
-        player.sendMessage(`Welcome to server`);
+        player.sendMessage("Welcome to server!");
         player.teleport(player.getLocation().add(0, 5, 0));
     });
 
-    onCommand("testjs", function(command) {
-        var sender = command.sender;
-        var args = command.args;
-
-        sender.sendMessage("Test from js");
-
+    plugin.onCommand("testjs", function(cmd) {
+        cmd.sender.sendMessage("JS command works!");
         return true;
     });
-}
 
-function onDisable() {
-    logger.info("JS plugin shutdown");
-}
+    function onEnable() {
+        plugin.logger.info("Script enabled");
+    }
+
+    function onDisable() {
+        plugin.logger.info("Script disabled");
+    }
+})();

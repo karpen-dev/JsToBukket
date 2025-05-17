@@ -12,7 +12,9 @@ import org.mozilla.javascript.*;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class TsToBukket extends JavaPlugin implements CommandExecutor {
 
@@ -27,28 +29,56 @@ public final class TsToBukket extends JavaPlugin implements CommandExecutor {
     public void onEnable() {
         rhino = Context.enter();
         rhino.setLanguageVersion(Context.VERSION_ES6);
-
         registerCommonEvents();
 
         Scriptable sharedScope = rhino.initStandardObjects();
-        ScriptableObject.putProperty(sharedScope, "plugin", this);
-        ScriptableObject.putProperty(sharedScope, "logger", getLogger());
 
-        String initScript = "if (typeof exports !== 'undefined') delete exports;\n" +
-                "if (typeof module !== 'undefined') delete module;\n" +
-                "function onEvent(eventName, callback) {\n" +
-                "  plugin.registerEvent(eventName, callback);\n" +
-                "}\n" +
-                "function onCommand(commandName, callback) {\n" +
-                "  plugin.registerJsCommand(commandName, callback);\n" +
-                "}";
+        initNodeJsEnvironment(sharedScope);
 
-        rhino.evaluateString(sharedScope, initScript, "init.js", 1, null);
         loadAllScripts(sharedScope);
 
         jsCmd = new Js(this, sharedScope, loadedScripts);
         Objects.requireNonNull(getCommand("js")).setExecutor(jsCmd);
         Objects.requireNonNull(getCommand("js")).setTabCompleter(jsCmd);
+    }
+
+    private void initNodeJsEnvironment(Scriptable scope) {
+        try {
+            ScriptableObject pluginApi = new NativeObject();
+
+            ScriptableObject.putProperty(pluginApi, "onEvent", new BaseFunction() {
+                public Object call(Context cx, Scriptable caller, Scriptable thisObj, Object[] args) {
+                    if (args.length >= 2) {
+                        registerEvent(args[0].toString(), (Function)args[1]);
+                    }
+                    return Undefined.instance;
+                }
+            });
+
+            ScriptableObject.putProperty(pluginApi, "onCommand", new BaseFunction() {
+                public Object call(Context cx, Scriptable caller, Scriptable thisObj, Object[] args) {
+                    if (args.length >= 2) {
+                        registerJsCommand(args[0].toString(), (Function)args[1]);
+                    }
+                    return Undefined.instance;
+                }
+            });
+
+            ScriptableObject.putProperty(pluginApi, "logger", getLogger());
+
+            ScriptableObject.putProperty(scope, "__pluginAPI__", pluginApi);
+
+            String moduleSystem = "var plugin = __pluginAPI__;\n" +
+                    "function require(module) {\n" +
+                    "    if (module === 'plugin') return __pluginAPI__;\n" +
+                    "    return null;\n" +
+                    "}";
+
+            rhino.evaluateString(scope, moduleSystem, "moduleSystem.js", 1, null);
+
+        } catch (Exception e) {
+            getLogger().severe("Error initializing JS environment: " + e.getMessage());
+        }
     }
 
     public void registerJsCommand(String commandName, Function callback) {
@@ -174,39 +204,44 @@ public final class TsToBukket extends JavaPlugin implements CommandExecutor {
         }
     }
 
-   public void loadScript(File jsFile, Scriptable sharedScope) {
-        try (FileReader reader = new FileReader(jsFile)) {
+    public void loadScript(File jsFile, Scriptable sharedScope) {
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(jsFile), StandardCharsets.UTF_8)) {
             Scriptable scope = rhino.newObject(sharedScope);
             scope.setPrototype(sharedScope);
             scope.setParentScope(null);
 
-            StringBuilder scriptContent = new StringBuilder();
-            try (BufferedReader br = new BufferedReader(reader)) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    if (!line.trim().startsWith("exports.") && !line.trim().startsWith("module.exports")) {
-                        scriptContent.append(line).append("\n");
-                    }
-                }
+            String scriptContent = new BufferedReader(reader).lines()
+                    .collect(Collectors.joining("\n"));
+
+            String wrappedScript = "(function() {\n" + scriptContent + "\n})();";
+
+            rhino.evaluateString(scope, wrappedScript, jsFile.getName(), 1, null);
+
+            Object onEnable = scope.get("onEnable", scope);
+            if (onEnable instanceof Function) {
+                ((Function)onEnable).call(rhino, scope, scope, new Object[]{});
             }
-
-            rhino.evaluateString(scope, scriptContent.toString(), jsFile.getName(), 1, null);
-
-            if (!(scope.get("onEnable", scope) instanceof Function)) {
-                throw new Exception("onEnable not found!");
-            }
-
-            if (!(scope.get("onDisable", scope) instanceof Function)) {
-                throw new Exception("onDisable not found!");
-            }
-
-            ((Function)scope.get("onEnable", scope)).call(rhino, scope, scope, new Object[]{});
 
             loadedScripts.put(jsFile.getName(), scope);
-            getLogger().info("Script " + jsFile.getName() + " loaded!");
+            getLogger().info("Script loaded: " + jsFile.getName());
 
         } catch (Exception e) {
-            getLogger().severe("Error loading script " + jsFile.getName() + ": " + e.getMessage());
+            getLogger().severe("Script load error (" + jsFile.getName() + "): " + e.getMessage());
+        }
+    }
+
+    private String readResourceFile(String filename) {
+        try (InputStream is = getResource(filename);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+            StringBuilder content = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+            return content.toString();
+        } catch (IOException e) {
+            getLogger().severe("Failed to read resource file: " + filename);
+            return "";
         }
     }
 
