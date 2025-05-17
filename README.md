@@ -4,6 +4,8 @@ Drop you .js files to plugin folder.
 
 This is just a prototype, the code is far from perfect.
 
+**[Example plugin](https://github.com/karpen-dev/SimpleWeather/)
+
 **Example code**  
 ```javascript
 (function() {
