@@ -1,11 +1,3 @@
-## Javascript to bukkit plugin
-This plugin allows you to execute javascript files in bukkit plugins.   
-Drop you .js files to plugin folder.
-
-This is just a prototype, the code is far from perfect.
-
-**Example code**  
-```javascript
 function onEnable() {
     logger.info("JS plugin has started");
 
@@ -28,4 +20,3 @@ function onEnable() {
 function onDisable() {
     logger.info("JS plugin shutdown");
 }
-```

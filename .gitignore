@@ -1,4 +1,3 @@
 # Project exclude paths
 /out/
 /target/
-/ts/test/simpleplugin.js

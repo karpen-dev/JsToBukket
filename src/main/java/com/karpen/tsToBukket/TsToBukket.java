@@ -2,20 +2,25 @@ package com.karpen.tsToBukket;
 
 import com.karpen.tsToBukket.commands.Js;
 import org.bukkit.Bukkit;
+import org.bukkit.command.*;
+import org.bukkit.command.defaults.PluginsCommand;
 import org.bukkit.event.*;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mozilla.javascript.*;
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.*;
 
-public final class TsToBukket extends JavaPlugin {
+public final class TsToBukket extends JavaPlugin implements CommandExecutor {
 
     private Context rhino;
-
     private final Map<String, Scriptable> loadedScripts = new HashMap<>();
     private final Map<String, List<Function>> eventHandlers = new HashMap<>();
     private final Map<String, Class<? extends Event>> eventClasses = new HashMap<>();
-
+    private final Map<String, Function> commandHandlers = new HashMap<>();
     private Js jsCmd;
 
     @Override
@@ -33,17 +38,63 @@ public final class TsToBukket extends JavaPlugin {
                 "if (typeof module !== 'undefined') delete module;\n" +
                 "function onEvent(eventName, callback) {\n" +
                 "  plugin.registerEvent(eventName, callback);\n" +
+                "}\n" +
+                "function onCommand(commandName, callback) {\n" +
+                "  plugin.registerJsCommand(commandName, callback);\n" +
                 "}";
 
         rhino.evaluateString(sharedScope, initScript, "init.js", 1, null);
-
         loadAllScripts(sharedScope);
 
         jsCmd = new Js(this, sharedScope, loadedScripts);
-
         Objects.requireNonNull(getCommand("js")).setExecutor(jsCmd);
         Objects.requireNonNull(getCommand("js")).setTabCompleter(jsCmd);
+    }
 
+    public void registerJsCommand(String commandName, Function callback) {
+        commandHandlers.put(commandName.toLowerCase(), callback);
+
+        try {
+            Field commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
+            commandMapField.setAccessible(true);
+            CommandMap commandMap = (CommandMap) commandMapField.get(Bukkit.getPluginManager());
+
+            Constructor<PluginCommand> constructor = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
+            constructor.setAccessible(true);
+            PluginCommand cmd = constructor.newInstance(commandName, this);
+
+            cmd.setDescription("Command from JavaScript");
+            cmd.setUsage("/" + commandName);
+            cmd.setExecutor(this);
+
+            commandMap.register(this.getName(), cmd);
+
+            getLogger().info("Command registered: /" + commandName);
+        } catch (Exception e) {
+            getLogger().severe("Error registration: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        Function handler = commandHandlers.get(cmd.getName().toLowerCase());
+        if (handler != null) {
+            try {
+                Scriptable commandInfo = rhino.newObject(rhino.initStandardObjects());
+                ScriptableObject.putProperty(commandInfo, "sender", Context.javaToJS(sender, commandInfo));
+                ScriptableObject.putProperty(commandInfo, "command", Context.javaToJS(cmd, commandInfo));
+                ScriptableObject.putProperty(commandInfo, "label", label);
+                ScriptableObject.putProperty(commandInfo, "args", Context.javaToJS(args, commandInfo));
+
+                Object result = handler.call(rhino, rhino.initStandardObjects(), handler, new Object[]{commandInfo});
+                return result instanceof Boolean ? (Boolean) result : true;
+            } catch (Exception e) {
+                getLogger().severe("Error with execution command: " + e.getMessage());
+                sender.sendMessage("§cError with execution command");
+                return true;
+            }
+        }
+        return false;
     }
 
     private void registerCommonEvents() {
